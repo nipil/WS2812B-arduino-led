@@ -5,6 +5,7 @@ Power consumption **WARNING** when powerinf the LEDS from the MCU board voltage 
 - Each LED in the strip consumes up to 50mA when fully white and at full brightness
 - If you power the strip/ring by the arduino, beware of total power consumption !
 - For an arduino uno, the available current from the onboard 5V regulator is 400-500mA max
+- Real world example : [this](https://aliexpress.com/item/1005007587825691.html) 24 led ring consumes +650mA when full white
 
 How does the protocol work
 
@@ -29,6 +30,10 @@ How does the protocol work
     - G7 G6 G5 G4 G3 G2 G1 G0 R7 R6 R5 R4 R3 R2 R1 R0 B7 B6 B5 B4 B3 B2 B1 B0
     - Follow the order of GRB to sent data and the high bit sent at first
     - Any LOW for +50us resets the LED chip
-    - After reset, each device reads the first 24 bit (GRB 8:8:8) of data into an internal buffer
     - All consecutive bits after the first 24 are forwarded to the next device
     - The internal buffer is written to the PWM controller during the next reset
+  - Reset
+    - an idle (low) period of more than a few microseconds trigger a reset
+    - on reset, the data is latched and used to set led color and brighness
+    - after reset each device reads the first 24 bit (GRB 8:8:8) of data into an internal buffer
+    - and once the first 24 bits are read, the next ones are re-emitted to the next led
