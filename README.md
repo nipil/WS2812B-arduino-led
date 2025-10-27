@@ -1,8 +1,5 @@
 # WS2812B-arduino-led
 
-Very interesting read about timing tolerance :
-https://cpldcpu.com/2014/01/14/light_ws2812-library-v2-0-part-i-understanding-the-ws2812/
-
 Power consumption **WARNING** when powerinf the LEDS from the MCU board voltage regulator
 
 - Each LED in the strip consumes up to 50mA when fully white and at full brightness
@@ -11,6 +8,8 @@ Power consumption **WARNING** when powerinf the LEDS from the MCU board voltage 
 
 How does the protocol work
 
+- Very interesting read about timing tolerance of WS2812 chips
+  - <https://cpldcpu.com/2014/01/14/light_ws2812-library-v2-0-part-i-understanding-the-ws2812>
 - For an UNO with a 16MHz crystal, using and oscilloscope :
   - ATMEGA328P digitalWriteFast duration is 125ns
   - `PORTB=PORTB;` is 125ns too
