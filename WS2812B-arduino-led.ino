@@ -33,19 +33,32 @@ void set_color(LEDS& leds, const uint8_t red, const uint8_t green, const uint8_t
   }
 }
 
+inline void noop() __attribute__((always_inline));
+
+void noop_tick() {
+  uint8_t dummy = PORTB;
+}
+
 inline void WS2812_write_bit(const uint8_t bit) __attribute__((always_inline));
 
 void WS2812_write_bit(const uint8_t bit) {
   digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
+  noop_tick();
+  noop_tick();
+  noop_tick();
+  noop_tick();
   digitalWriteFast(WS2812B_DATA_PIN, bit);
-  digitalWriteFast(WS2812B_DATA_PIN, bit);
-  digitalWriteFast(WS2812B_DATA_PIN, bit);
-  digitalWriteFast(WS2812B_DATA_PIN, bit);
+  noop_tick();
+  noop_tick();
+  noop_tick();
+  noop_tick();
+  noop_tick();
+  noop_tick();
   digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
+  noop_tick();
+  noop_tick();
+  noop_tick();
+  noop_tick();
 }
 
 inline void WS2812_write_byte(const uint8_t value) __attribute__((always_inline));
@@ -78,6 +91,8 @@ void WS2812_write_led(const LED& led) {
   WS2812_write_byte(led.blue);
 }
 
+inline void WS2812_write_leds(const LEDS& leds) __attribute__((always_inline));
+
 void WS2812_write_leds(const LEDS& leds) {
   uint8_t count = sizeof(LEDS) / sizeof(LED);
   for (uint8_t i = 0; i < count; i++) {
@@ -97,22 +112,16 @@ void setup() {
 
 void loop() {
 
-  uint8_t green, red, blue;
+  uint8_t green = 0, red = 0, blue = 0;
   uint32_t value = (millis() / 1000) % 3;
   switch (value) {
     case 0:
       red = 0xFF;
-      green = 0;
-      blue = 0;
       break;
     case 1:
-      red = 0;
       green = 0xFF;
-      blue = 0;
       break;
     case 2:
-      red = 0;
-      green = 0;
       blue = 0XFF;
       break;
   }
@@ -132,22 +141,23 @@ void loop() {
   digitalWriteFast(TRIGGER_PIN, LOW);
 
   // for (uint8_t i = 0; i < LED_COUNT; i++) {
-  //   WS2812_write_byte(green);
-  //   WS2812_write_byte(red);
-  //   WS2812_write_byte(blue);
+  WS2812_write_byte(green);
+  WS2812_write_byte(red);
+  WS2812_write_byte(blue);
+
+  WS2812_write_byte(0);
+  WS2812_write_byte(0xFF);
+  WS2812_write_byte(0);
   // }
 
-  for (uint8_t i = 0; i < LED_COUNT; i++) {
-    WS2812_write_byte(0);
-    WS2812_write_byte(0xFF);
-    WS2812_write_byte(0);
-  }
+  // delayMicroseconds(10);
+  delayMicroseconds(100);
+  // delay(1);
+  // delay(10);
+  // delay(100);
 
   digitalWriteFast(AUX_PIN, HIGH);
   digitalWriteFast(AUX_PIN, LOW);
 
   interrupts();
-
-  // delayMicroseconds(100);
-  delay(100);
 }
