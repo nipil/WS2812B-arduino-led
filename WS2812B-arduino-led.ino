@@ -10,99 +10,144 @@ typedef struct {
   uint8_t red;
   uint8_t green;
   uint8_t blue;
-} PIXEL;
+} LED;
 
-typedef PIXEL LED_STRIP[LED_COUNT];
+typedef LED LEDS[LED_COUNT];
 
-LED_STRIP global_leds;
+LEDS global_leds;
 
-void set_color(LED_STRIP& leds, uint8_t red, uint8_t green, uint8_t blue) {
-  uint8_t count = sizeof(LED_STRIP) / sizeof(PIXEL);
+uint8_t reverse_bits(uint8_t value) {
+  // see https://stackoverflow.com/a/2602885/5973357
+  value = (value & 0xF0) >> 4 | (value & 0x0F) << 4;
+  value = (value & 0xCC) >> 2 | (value & 0x33) << 2;
+  value = (value & 0xAA) >> 1 | (value & 0x55) << 1;
+  return value;
+}
+
+void set_color(LEDS& leds, const uint8_t red, const uint8_t green, const uint8_t blue) {
+  uint8_t count = sizeof(LEDS) / sizeof(LED);
   for (uint8_t i = 0; i < count; i++) {
-    leds[i].red = red;
-    leds[i].green = green;
-    leds[i].blue = blue;
+    leds[i].red = reverse_bits(red);
+    leds[i].green = reverse_bits(green);
+    leds[i].blue = reverse_bits(blue);
   }
 }
 
-inline void WS2812_write_bit(uint8_t value) __attribute__((always_inline));
+inline void WS2812_write_bit(const uint8_t bit) __attribute__((always_inline));
 
-void WS2812_write_bit(uint8_t value) {
+void WS2812_write_bit(const uint8_t bit) {
   digitalWriteFast(WS2812B_DATA_PIN, HIGH);
   digitalWriteFast(WS2812B_DATA_PIN, HIGH);
   digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, value);
-  digitalWriteFast(WS2812B_DATA_PIN, value);
-  digitalWriteFast(WS2812B_DATA_PIN, value);
-  digitalWriteFast(WS2812B_DATA_PIN, value);
+  digitalWriteFast(WS2812B_DATA_PIN, bit);
+  digitalWriteFast(WS2812B_DATA_PIN, bit);
+  digitalWriteFast(WS2812B_DATA_PIN, bit);
+  digitalWriteFast(WS2812B_DATA_PIN, bit);
   digitalWriteFast(WS2812B_DATA_PIN, LOW);
   digitalWriteFast(WS2812B_DATA_PIN, LOW);
   digitalWriteFast(WS2812B_DATA_PIN, LOW);
 }
 
-inline void WS2812_write_one() __attribute__((always_inline));
+inline void WS2812_write_byte(const uint8_t value) __attribute__((always_inline));
 
-void WS2812_write_one() {
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
+void WS2812_write_byte(uint8_t value) {
+  // write from LSB, as byte bits must have been reversed beforehand
+  WS2812_write_bit(value & 0x01);
+  value >>= 1;
+  WS2812_write_bit(value & 0x01);
+  value >>= 1;
+  WS2812_write_bit(value & 0x01);
+  value >>= 1;
+  WS2812_write_bit(value & 0x01);
+  value >>= 1;
+  WS2812_write_bit(value & 0x01);
+  value >>= 1;
+  WS2812_write_bit(value & 0x01);
+  value >>= 1;
+  WS2812_write_bit(value & 0x01);
+  value >>= 1;
+  WS2812_write_bit(value & 0x01);
+  value >>= 1;
 }
 
-inline void WS2812_write_zero() __attribute__((always_inline));
+inline void WS2812_write_led(const LED& led) __attribute__((always_inline));
 
-void WS2812_write_zero() {
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  digitalWriteFast(WS2812B_DATA_PIN, LOW);
+void WS2812_write_led(const LED& led) {
+  WS2812_write_byte(led.green);
+  WS2812_write_byte(led.red);
+  WS2812_write_byte(led.blue);
+}
+
+void WS2812_write_leds(const LEDS& leds) {
+  uint8_t count = sizeof(LEDS) / sizeof(LED);
+  for (uint8_t i = 0; i < count; i++) {
+    WS2812_write_led(leds[i]);
+  }
 }
 
 void setup() {
+  Serial.begin(9600);
   pinModeFast(WS2812B_DATA_PIN, OUTPUT);
   digitalWriteFast(WS2812B_DATA_PIN, LOW);
   pinModeFast(TRIGGER_PIN, OUTPUT);
   digitalWriteFast(TRIGGER_PIN, LOW);
   pinModeFast(AUX_PIN, OUTPUT);
   digitalWriteFast(AUX_PIN, LOW);
-  set_color(global_leds, 64, 128, 255);
 }
 
 void loop() {
+
+  uint8_t green, red, blue;
+  uint32_t value = (millis() / 1000) % 3;
+  switch (value) {
+    case 0:
+      red = 0xFF;
+      green = 0;
+      blue = 0;
+      break;
+    case 1:
+      red = 0;
+      green = 0xFF;
+      blue = 0;
+      break;
+    case 2:
+      red = 0;
+      green = 0;
+      blue = 0XFF;
+      break;
+  }
+
+  // Serial.print("value=");
+  // Serial.print(value);
+  // Serial.print(" red=");
+  // Serial.print(red);
+  // Serial.print(" green=");
+  // Serial.print(red);
+  // Serial.print(" blue=");
+  // Serial.println(blue);
+
+  noInterrupts();
+
   digitalWriteFast(TRIGGER_PIN, HIGH);
   digitalWriteFast(TRIGGER_PIN, LOW);
 
-  WS2812_write_one();
-  digitalWriteFast(AUX_PIN, HIGH);
-  digitalWriteFast(AUX_PIN, LOW);
-  WS2812_write_zero();
-  digitalWriteFast(AUX_PIN, HIGH);
-  digitalWriteFast(AUX_PIN, LOW);
-  WS2812_write_bit(HIGH);
-  digitalWriteFast(AUX_PIN, HIGH);
-  digitalWriteFast(AUX_PIN, LOW);
-  WS2812_write_bit(LOW);
+  // for (uint8_t i = 0; i < LED_COUNT; i++) {
+  //   WS2812_write_byte(green);
+  //   WS2812_write_byte(red);
+  //   WS2812_write_byte(blue);
+  // }
+
+  for (uint8_t i = 0; i < LED_COUNT; i++) {
+    WS2812_write_byte(0);
+    WS2812_write_byte(0xFF);
+    WS2812_write_byte(0);
+  }
+
   digitalWriteFast(AUX_PIN, HIGH);
   digitalWriteFast(AUX_PIN, LOW);
 
-  for (int i = 0; i < 16; i++) {
-    delay(1);
-    digitalWriteFast(WS2812B_DATA_PIN, HIGH);
-    delay(1);
-    digitalWriteFast(WS2812B_DATA_PIN, LOW);
-  }
-  digitalWriteFast(AUX_PIN, HIGH);
-  digitalWriteFast(AUX_PIN, LOW);
+  interrupts();
+
+  // delayMicroseconds(100);
+  delay(100);
 }
