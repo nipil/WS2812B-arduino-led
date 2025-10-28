@@ -40,18 +40,9 @@ Do not power the  LEDS from the MCU board voltage regulator without prior curren
     - after reset each device reads the first 24 bit (GRB 8:8:8) of data into an internal buffer
     - and once the first 24 bits are read, the next ones are re-emitted to the next led
 
-## Current consumption (raw measurement)
+## Power consumption
 
-| White value | SMPS mA@5V | mA/led | uA/led/unit |
-|:-----------:|:----------:|:------:|:-----------:|
-|     0x10    |     65     |   2.7  |     169     |
-|     0x30    |     175    |   7.3  |     152     |
-|     0x50    |     272    |  11.3  |     142     |
-|     0x70    |     353    |  14.7  |     131     |
-|     0x90    |     421    |  17.5  |     122     |
-|     0xB0    |     475    |  19.8  |     112     |
-|     0xD0    |     525    |  21.9  |     105     |
-|     0xFF    |     585    |  24.4  |      96     |
+See [current.ods](current.ods) for consumed current vs values
 
 ## Too-blue compensation
 
