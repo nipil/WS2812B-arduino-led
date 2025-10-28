@@ -57,17 +57,40 @@ void setup() {
   digitalWriteFast(AUX_PIN, LOW);
 }
 
+// with 0xFF 24 leds consumes 602mA
+// with 192, the same 24 leds should consume 450-500mA
+#define MAX_WHITE_INTENSITY_WITH_BLUE_DIV_2 0xC0
+
 void loop() {
   static uint8_t last_intensity = 0;
   uint8_t colors[] = { 0, 0, 0 };
   uint32_t ms = millis();
-  uint8_t intensity = (ms >> 6) & 0xFF;
-  uint8_t value = (ms >> 10) % 3;
+  uint8_t intensity = (ms >> 7) & 0xFF;
+  uint8_t value = (ms >> 10) % 4;
 
   if (ms < 2000) {
-    colors[0] = colors[1] = colors[2] = 0xFF;
+    colors[0] = colors[1] = colors[2] = reverse_bits(0x10);  // 0 = 65mA
+  } else if (ms < 4000) {
+    colors[0] = colors[1] = colors[2] = reverse_bits(0x30);  // 1 = 175mA
+  } else if (ms < 6000) {
+    colors[0] = colors[1] = colors[2] = reverse_bits(0x50);  // 2 = 272mA
+  } else if (ms < 8000) {
+    colors[0] = colors[1] = colors[2] = reverse_bits(0x70);  // 3 = 353mA
+  } else if (ms < 10000) {
+    colors[0] = colors[1] = colors[2] = reverse_bits(0x90);  // 4 = 421mA
+  } else if (ms < 12000) {
+    colors[0] = colors[1] = colors[2] = reverse_bits(0xB0);  // 5 = 475mA
+  } else if (ms < 14000) {
+    colors[0] = colors[1] = colors[2] = reverse_bits(0xD0);  // 6 = 525mA
+  } else if (ms < 16000) {
+    colors[0] = colors[1] = colors[2] = reverse_bits(0xFF);  // 7 = 585mA
   } else {
-    colors[value] = reverse_bits(intensity);
+    if (value == 0) {
+      colors[0] = colors[1] = reverse_bits(MAX_WHITE_INTENSITY_WITH_BLUE_DIV_2);
+      colors[2] = colors[0] >> 1;
+    } else {
+      colors[value - 1] = reverse_bits(intensity);
+    }
   }
 
   digitalWriteFast(TRIGGER_PIN, HIGH);

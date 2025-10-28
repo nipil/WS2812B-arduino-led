@@ -1,13 +1,15 @@
 # WS2812B-arduino-led
 
-Power consumption **WARNING** when powerinf the LEDS from the MCU board voltage regulator
+## WARNING: led strip power consumption
+
+Do not power the  LEDS from the MCU board voltage regulator without prior current measurement !
 
 - Each LED in the strip consumes up to 50mA when fully white and at full brightness
 - If you power the strip/ring by the arduino, beware of total power consumption !
 - For an arduino uno, the available current from the onboard 5V regulator is 400-500mA max
 - Real world example : [this](https://aliexpress.com/item/1005007587825691.html) 24 led ring consumes +650mA when full white
 
-How does the protocol work
+## How does the protocol work
 
 - Very interesting read about timing tolerance of WS2812 chips
   - <https://cpldcpu.com/2014/01/14/light_ws2812-library-v2-0-part-i-understanding-the-ws2812>
@@ -37,3 +39,22 @@ How does the protocol work
     - on reset, the data is latched and used to set led color and brighness
     - after reset each device reads the first 24 bit (GRB 8:8:8) of data into an internal buffer
     - and once the first 24 bits are read, the next ones are re-emitted to the next led
+
+## Current consumption (raw measurement)
+
+| White value | SMPS mA@5V | mA/led | uA/led/unit |
+|:-----------:|:----------:|:------:|:-----------:|
+|     0x10    |     65     |   2.7  |     169     |
+|     0x30    |     175    |   7.3  |     152     |
+|     0x50    |     272    |  11.3  |     142     |
+|     0x70    |     353    |  14.7  |     131     |
+|     0x90    |     421    |  17.5  |     122     |
+|     0xB0    |     475    |  19.8  |     112     |
+|     0xD0    |     525    |  21.9  |     105     |
+|     0xFF    |     585    |  24.4  |      96     |
+
+## Too-blue compensation
+
+I noticed that at full white, the color is actually blue-ish
+
+I divided the BLUE value by about 2 compared to RED/GREEN to get a better balance
